@@ -221,12 +221,52 @@ void matrix_tasks()
 
 int do_arrays_parallel(int size, int* a, int* b, int* c)
 {
-
+	int result = 1;
+	int temp;
+#pragma omp parallel shared(a,b,c) private(temp) reduction(*:result)  if(size > LIMIT)
+	{
+#pragma omp for
+		for (int i = 0; i < size; i++)
+		{
+			if (a[i] & 1)
+			{
+				temp = (b[i] + a[i]);
+			}
+			else
+			{
+				if (c[i] != 0)
+					temp = (b[i] / c[i]);
+				else
+					temp = 0;
+			}
+			if (temp != 0)
+				result = result * temp;
+		}
+	}
+	return result;
 }
 
 int do_arrays(int size, int* a, int* b, int* c)
 {
-
+	int result = 1;
+	int temp;
+	for (int i = 0; i < size; i++)
+	{
+		if (a[i] & 1)
+		{
+			temp = (b[i] + a[i]);
+		}
+		else
+		{
+			if (c[i] != 0)
+				temp = (b[i] / c[i]);
+			else
+				temp = 0;
+		}
+		if (temp != 0)
+			result = result * temp;
+	}
+	return result;
 }
 
 void fill_array(int size, int* a)
@@ -238,11 +278,41 @@ void fill_array(int size, int* a)
 void array_test_parallel(int n)
 {
 
+	int* a = new int[n] {};
+	int* b = new int[n] {};
+	int* c = new int[n] {};
+	fill_array(n, a);
+	fill_array(n, b);
+	fill_array(n, c);
+
+	double start = omp_get_wtime();
+	auto res = do_arrays_parallel(n, a, b, c);
+	double end = omp_get_wtime();
+
+	cout << n << "\t" << res << "\tp for \t" << (end - start) << endl;
+	delete[]a;
+	delete[]b;
+	delete[]c;
 }
 
 void array_test(int n)
 {
 
+	int* a = new int[n] {};
+	int* b = new int[n] {};
+	int* c = new int[n] {};
+	fill_array(n, a);
+	fill_array(n, b);
+	fill_array(n, c);
+
+	double start = omp_get_wtime();
+	auto res = do_arrays(n, a, b, c);
+	double end = omp_get_wtime();
+
+	cout << n << "\t" << res << "\tfor \t" << (end - start) << endl;
+	delete[]a;
+	delete[]b;
+	delete[]c;
 }
 
 void array_tests(int n)
@@ -257,13 +327,19 @@ void array_tests(int n)
 
 void array_tasks()
 {
+	int inc = 10000;
+	for (int i = 0; i < 1000; i++)
+	{
+
+		array_tests(inc + i * inc);
+	}
 
 }
 
 int main()
 {
-	matrix_tasks();
-
+	//matrix_tasks();
+	array_tasks();
 
 
 }
