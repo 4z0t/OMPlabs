@@ -305,13 +305,14 @@ int do_arrays_parallel_barrier(int size, int* a, int* b, int* c)
 #pragma omp master
 		{
 			auto n = omp_get_num_threads();
-			mults = new int[n]{};
+			mults = new int[n] {};
 			for (int i = 0; i < n; i++)
 			{
 				mults[i] = 1;
 			}
 		}
 #pragma omp barrier
+		int j = omp_get_thread_num();
 #pragma omp for
 		for (int i = 0; i < size; i++)
 		{
@@ -327,7 +328,7 @@ int do_arrays_parallel_barrier(int size, int* a, int* b, int* c)
 					temp = 0;
 			}
 			if (temp != 0)
-				mults[omp_get_thread_num()] *= temp;
+				mults[j] *= temp;
 		}
 #pragma omp barrier
 
@@ -339,6 +340,7 @@ int do_arrays_parallel_barrier(int size, int* a, int* b, int* c)
 				result *= mults[i];
 			}
 			delete[] mults;
+			mults = nullptr;
 		}
 	}
 	return result;
