@@ -264,7 +264,37 @@ int do_arrays_parallel_sections_4(const int& size, int* a, int* b, int* c)
 	}
 	return result1 * result2 * result3 * result4;
 }
-
+int do_arrays_parallel_lock(int size, int* a, int* b, int* c)
+{
+	omp_lock_t lock;
+	omp_init_lock(&lock);
+	int result = 1;
+	int temp;
+#pragma omp parallel shared(a,b,c) private(temp)  if(size > LIMIT_ARR)
+	{
+#pragma omp for
+		for (int i = 0; i < size; i++)
+		{
+			if (a[i] & 1)
+			{
+				temp = (b[i] + a[i]);
+			}
+			else
+			{
+				if (c[i] != 0)
+					temp = (b[i] / c[i]);
+				else
+					temp = 0;
+			}
+			omp_set_lock(&lock);
+			if (temp != 0)
+				result = result * temp;
+			omp_unset_lock(&lock);
+		}
+	}
+	omp_destroy_lock(&lock);
+	return result;
+}
 
 double array_test(int n)
 {
@@ -381,7 +411,25 @@ double array_test_parallel_sections_4(int n)
 	delete[]c;
 	return (end - start);
 }
+double array_test_parallel_lock(int n)
+{
 
+	int* a = new int[n] {};
+	int* b = new int[n] {};
+	int* c = new int[n] {};
+	fill_array(n, a);
+	fill_array(n, b);
+	fill_array(n, c);
+
+	double start = omp_get_wtime();
+	auto res = do_arrays_parallel_lock(n, a, b, c);
+	double end = omp_get_wtime();
+
+	delete[]a;
+	delete[]b;
+	delete[]c;
+	return (end - start);
+}
 
 uint32_t width_space = 15;
 #define calc_time(n, t, r, func) srand(t);\
@@ -406,6 +454,7 @@ void array_tests(int n)
 	calc_time(n, t, r, array_test_parallel_critical);
 	calc_time(n, t, r, array_test_parallel_sections_2);
 	calc_time(n, t, r, array_test_parallel_sections_4);
+	calc_time(n, t, r, array_test_parallel_lock);
 	cout << endl;
 }
 
