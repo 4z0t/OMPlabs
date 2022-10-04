@@ -26,5 +26,8 @@
     <ClInclude Include="ArraysTasks.h">
       <Filter>Исходные файлы</Filter>
     </ClInclude>
+    <ClInclude Include="lab56">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

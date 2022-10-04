@@ -145,7 +145,7 @@ int do_arrays_parallel_sections_2(const int& size, int* a, int* b, int* c)
 				}
 				if (temp != 0)
 
-					result2 = result2 * temp;
+					result2 *= temp;
 			}
 		}
 #pragma omp section  
@@ -165,7 +165,7 @@ int do_arrays_parallel_sections_2(const int& size, int* a, int* b, int* c)
 				}
 				if (temp != 0)
 
-					result1 = result1 * temp;
+					result1 *= temp;
 			}
 		}
 	}
