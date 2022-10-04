@@ -126,7 +126,7 @@ int do_arrays_parallel_sections_2(int size, int* a, int* b, int* c)
 	int result2 = 1;
 	int result1 = 1;
 	int temp;
-#pragma omp sections  private(temp) 
+#pragma omp sections  private(temp) nowait
 	{
 
 #pragma omp section  
@@ -179,7 +179,7 @@ int do_arrays_parallel_sections_4(int size, int* a, int* b, int* c)
 	int result3 = 1;
 	int result4 = 1;
 	int temp;
-#pragma omp sections  private(temp) 
+#pragma omp sections  private(temp) nowait
 	{
 
 #pragma omp section  
