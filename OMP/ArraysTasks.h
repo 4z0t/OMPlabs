@@ -36,7 +36,7 @@ int do_arrays(int size, int* a, int* b, int* c)
 				temp = 0;
 		}
 		if (temp != 0)
-#pragma omp atomic
+
 			result *= temp;
 	}
 	return result;
@@ -88,7 +88,8 @@ int do_arrays_parallel_atomic(int size, int* a, int* b, int* c)
 					temp = 0;
 			}
 			if (temp != 0)
-				result = result * temp;
+#pragma omp atomic
+				result *= temp;
 		}
 	}
 	return result;
@@ -120,7 +121,7 @@ int do_arrays_parallel_critical(int size, int* a, int* b, int* c)
 	}
 	return result;
 }
-int do_arrays_parallel_sections_2(const int& size, int* a, int* b, int* c)
+int do_arrays_parallel_sections_2(int size, int* a, int* b, int* c)
 {
 	int result2 = 1;
 	int result1 = 1;
@@ -171,7 +172,7 @@ int do_arrays_parallel_sections_2(const int& size, int* a, int* b, int* c)
 	}
 	return result1 * result2;
 }
-int do_arrays_parallel_sections_4(const int& size, int* a, int* b, int* c)
+int do_arrays_parallel_sections_4(int size, int* a, int* b, int* c)
 {
 	int result1 = 1;
 	int result2 = 1;
@@ -346,10 +347,14 @@ int do_arrays_parallel_barrier(int size, int* a, int* b, int* c)
 	return result;
 }
 
+struct array_test_t {
+	double t;
+	int r;
+};
+typedef int array_test_func(int, int*, int*, int*);
 
-double array_test(int n)
+array_test_t array_test(int n, array_test_func f)
 {
-
 	int* a = new int[n] {};
 	int* b = new int[n] {};
 	int* c = new int[n] {};
@@ -358,153 +363,19 @@ double array_test(int n)
 	fill_array(n, c);
 
 	double start = omp_get_wtime();
-	auto res = do_arrays(n, a, b, c);
+	auto res = f(n, a, b, c);
 	double end = omp_get_wtime();
 
 	delete[]a;
 	delete[]b;
 	delete[]c;
-	return (end - start);
-}
-double array_test_parallel(int n)
-{
-
-	int* a = new int[n] {};
-	int* b = new int[n] {};
-	int* c = new int[n] {};
-	fill_array(n, a);
-	fill_array(n, b);
-	fill_array(n, c);
-
-	double start = omp_get_wtime();
-	auto res = do_arrays_parallel(n, a, b, c);
-	double end = omp_get_wtime();
-
-	delete[]a;
-	delete[]b;
-	delete[]c;
-	return (end - start);
-}
-double array_test_parallel_atomic(int n)
-{
-
-	int* a = new int[n] {};
-	int* b = new int[n] {};
-	int* c = new int[n] {};
-	fill_array(n, a);
-	fill_array(n, b);
-	fill_array(n, c);
-
-	double start = omp_get_wtime();
-	auto res = do_arrays_parallel_atomic(n, a, b, c);
-	double end = omp_get_wtime();
-
-
-	delete[]a;
-	delete[]b;
-	delete[]c;
-	return (end - start);
-}
-double array_test_parallel_critical(int n)
-{
-
-	int* a = new int[n] {};
-	int* b = new int[n] {};
-	int* c = new int[n] {};
-	fill_array(n, a);
-	fill_array(n, b);
-	fill_array(n, c);
-
-	double start = omp_get_wtime();
-	auto res = do_arrays_parallel_critical(n, a, b, c);
-	double end = omp_get_wtime();
-
-	delete[]a;
-	delete[]b;
-	delete[]c;
-	return (end - start);
-}
-double array_test_parallel_sections_2(int n)
-{
-
-	int* a = new int[n] {};
-	int* b = new int[n] {};
-	int* c = new int[n] {};
-	fill_array(n, a);
-	fill_array(n, b);
-	fill_array(n, c);
-
-	double start = omp_get_wtime();
-	auto res = do_arrays_parallel_sections_2(n, a, b, c);
-	double end = omp_get_wtime();
-
-	delete[]a;
-	delete[]b;
-	delete[]c;
-	return (end - start);
-}
-double array_test_parallel_sections_4(int n)
-{
-
-	int* a = new int[n] {};
-	int* b = new int[n] {};
-	int* c = new int[n] {};
-	fill_array(n, a);
-	fill_array(n, b);
-	fill_array(n, c);
-
-	double start = omp_get_wtime();
-	auto res = do_arrays_parallel_sections_4(n, a, b, c);
-	double end = omp_get_wtime();
-
-	delete[]a;
-	delete[]b;
-	delete[]c;
-	return (end - start);
-}
-double array_test_parallel_lock(int n)
-{
-
-	int* a = new int[n] {};
-	int* b = new int[n] {};
-	int* c = new int[n] {};
-	fill_array(n, a);
-	fill_array(n, b);
-	fill_array(n, c);
-
-	double start = omp_get_wtime();
-	auto res = do_arrays_parallel_lock(n, a, b, c);
-	double end = omp_get_wtime();
-
-	delete[]a;
-	delete[]b;
-	delete[]c;
-	return (end - start);
-}
-double array_test_parallel_barrier(int n)
-{
-
-	int* a = new int[n] {};
-	int* b = new int[n] {};
-	int* c = new int[n] {};
-	fill_array(n, a);
-	fill_array(n, b);
-	fill_array(n, c);
-
-	double start = omp_get_wtime();
-	auto res = do_arrays_parallel_barrier(n, a, b, c);
-	double end = omp_get_wtime();
-
-	delete[]a;
-	delete[]b;
-	delete[]c;
-	return (end - start);
+	return { end - start,res };
 }
 
 uint32_t width_space = 15;
 #define calc_time(n, t, r, func) srand(t);\
-	r = func(n);\
-	cout << r;\
+	r = array_test(n, func);\
+	cout << r.t;\
 	cout.fill(' ');\
 	cout.width(width_space);
 
@@ -519,15 +390,15 @@ void array_tests(int n)
 	cout.fill(' ');
 	cout << std::left;
 	cout.width(width_space);
-	double r;
-	calc_time(n, t, r, array_test);
-	calc_time(n, t, r, array_test_parallel);
-	calc_time(n, t, r, array_test_parallel_atomic);
-	calc_time(n, t, r, array_test_parallel_critical);
-	calc_time(n, t, r, array_test_parallel_sections_2);
-	calc_time(n, t, r, array_test_parallel_sections_4);
-	calc_time(n, t, r, array_test_parallel_lock);
-	calc_time(n, t, r, array_test_parallel_barrier);
+	array_test_t r;
+	calc_time(n, t, r, do_arrays);
+	calc_time(n, t, r, do_arrays_parallel);
+	calc_time(n, t, r, do_arrays_parallel_atomic);
+	calc_time(n, t, r, do_arrays_parallel_critical);
+	calc_time(n, t, r, do_arrays_parallel_sections_2);
+	calc_time(n, t, r, do_arrays_parallel_sections_4);
+	calc_time(n, t, r, do_arrays_parallel_lock);
+	calc_time(n, t, r, do_arrays_parallel_barrier);
 	cout << endl;
 }
 #undef calc_time
